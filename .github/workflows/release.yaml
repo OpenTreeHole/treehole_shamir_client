@@ -1,0 +1,37 @@
+name: Release
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  APP_NAME: shamir_client
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup Go
+        uses: actions/setup-go@master
+        with:
+          go-version: "stable"
+      - run: go build -o ${{ env.APP_NAME }}_linux_amd64
+      - run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o ${{ env.APP_NAME }}_linux_arm64.exe
+      - run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o ${{ env.APP_NAME }}_windows_amd64.exe
+      - run: CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -o ${{ env.APP_NAME }}_windows_arm64.exe
+      - run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o ${{ env.APP_NAME }}_darwin_amd64
+      - run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o ${{ env.APP_NAME }}_darwin_arm64
+      - name: Release
+        uses: softprops/action-gh-release@master
+        with:
+          files: |
+            ${{ env.APP_NAME }}_linux_amd64
+            ${{ env.APP_NAME }}_linux_arm64.exe
+            ${{ env.APP_NAME }}_windows_amd64.exe
+            ${{ env.APP_NAME }}_windows_arm64.exe
+            ${{ env.APP_NAME }}_darwin_amd64
+            ${{ env.APP_NAME }}_darwin_arm64
+          tag_name: github.ref_name
+
