@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	. "math/big"
 )
@@ -26,19 +25,11 @@ func FromString(rawShare string) (Share, error) {
 	return share, nil
 }
 
-func (share *Share) UnmarshalJSON(b []byte) error {
-	var str string
-	if err := json.Unmarshal(b, &str); err != nil {
-		return err
-	}
-	s, err := FromString(string(b))
-	if err != nil {
-		return err
-	}
-	*share = s
-	return nil
+func (share *Share) UnmarshalText(b []byte) (err error) {
+	*share, err = FromString(string(b))
+	return err
 }
 
-func (share Share) MarshalJson() ([]byte, error) {
-	return json.Marshal(share.ToString())
+func (share Share) MarshalText() ([]byte, error) {
+	return []byte(share.ToString()), nil
 }

@@ -12,6 +12,7 @@ import (
 
 var userID int
 var privateFilename string
+var authUrl string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -30,7 +31,7 @@ var decryptCmd = &cobra.Command{
 			return err
 		}
 
-		key, err := crypto.NewKey(data)
+		key, err := crypto.NewKeyFromArmored(string(data))
 		if err != nil {
 			return err
 		}
@@ -43,12 +44,12 @@ var decryptCmd = &cobra.Command{
 			return fmt.Errorf("invalid user_id %v", userID)
 		}
 		if userID == 0 {
-			err := utils.DecryptAllUser(key)
+			err := utils.DecryptAllUser(key, authUrl)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := utils.DecryptByUserID(key, userID)
+			err := utils.DecryptByUserID(key, userID, authUrl)
 			if err != nil {
 				return err
 			}
@@ -61,11 +62,15 @@ var decryptCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(decryptCmd)
 
+	decryptCmd.Flags().StringVarP(
+		&authUrl, "auth_url", "a",
+		"https://auth.fduhole.com", "the auth url")
+
 	decryptCmd.Flags().IntVarP(
 		&userID, "user-id", "u",
-		0, "targeted user's user_id, optional, default 0: all users")
+		0, "targeted user's user_id, optional")
 
 	decryptCmd.Flags().StringVarP(
 		&privateFilename, "key", "k",
-		"private.key", "specific private key filename, default private.key")
+		"private.key", "specific private key filename")
 }

@@ -13,22 +13,17 @@ import (
 	"strconv"
 )
 
-const authUrl = "https://auth.fduhole.com/api"
-
 var client = http.Client{}
 
-func DecryptAllUser(key *crypto.Key) error {
+func DecryptAllUser(key *crypto.Key, authUrl string) error {
 
 	var identityName = key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
-	req, err := http.NewRequest("GET", authUrl+"/shamir", nil)
+	req, err := http.NewRequest("GET", authUrl+"/api/shamir?identity_name="+identityName, nil)
 	if err != nil {
 		return err
 	}
-
-	q := req.URL.Query()
-	q.Add("identity_name", identityName)
 
 	rsp, err := client.Do(req)
 	if err != nil {
@@ -65,7 +60,7 @@ func DecryptAllUser(key *crypto.Key) error {
 	}
 
 	for i, message := range messages {
-		shareString, err := helper.DecryptMessageArmored(privateKey, []byte{}, message.PGPMessage)
+		shareString, err := helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
 		if err != nil {
 			return err
 		}
@@ -82,7 +77,7 @@ func DecryptAllUser(key *crypto.Key) error {
 		fmt.Printf("\ruser_id: %d, (%d / %d)", message.UserID, i, allUser)
 	}
 
-	fmt.Println("Done!")
+	fmt.Println("\nDone!")
 
 	shareData, err := json.Marshal(shareRequest)
 	if err != nil {
@@ -106,7 +101,7 @@ func DecryptAllUser(key *crypto.Key) error {
 
 	fmt.Println("share upload request save to share_data_all.json")
 
-	rsp, err = client.Post(authUrl+"/shamir/shares", "application/json", bytes.NewBuffer(shareData))
+	rsp, err = client.Post(authUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
 	if err != nil {
 		return err
 	}
@@ -127,17 +122,18 @@ func DecryptAllUser(key *crypto.Key) error {
 	return nil
 }
 
-func DecryptByUserID(key *crypto.Key, userID int) error {
+func DecryptByUserID(key *crypto.Key, userID int, authUrl string) error {
 	var identityName = key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
-	req, err := http.NewRequest("GET", authUrl+"/shamir/"+strconv.Itoa(userID), nil)
+	req, err := http.NewRequest(
+		"GET",
+		authUrl+"/api/shamir/"+strconv.Itoa(userID)+"?identity_name="+identityName,
+		nil,
+	)
 	if err != nil {
 		return err
 	}
-
-	q := req.URL.Query()
-	q.Add("identity_name", identityName)
 
 	rsp, err := client.Do(req)
 	if err != nil {
@@ -167,16 +163,16 @@ func DecryptByUserID(key *crypto.Key, userID int) error {
 		return err
 	}
 
-	shareString, err := helper.DecryptMessageArmored(privateKey, []byte{}, message.PGPMessage)
+	shareString, err := helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
 	if err != nil {
 		return err
 	}
-	share, err := FromString(shareString)
+	_, err = FromString(shareString)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("user_id: %v\nshare: %v\n", userID, share)
+	fmt.Printf("user_id: %v\n%v\n", userID, shareString)
 
 	return nil
 }
