@@ -22,6 +22,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var authUrl string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "treehole_shamir_client",
@@ -52,6 +54,8 @@ func init() {
 	// will be global for your application.
 
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.treehole_shamir_client.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&authUrl, "auth_url", "a",
+		"https://auth.fduhole.com", "the auth url")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

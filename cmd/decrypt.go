@@ -12,7 +12,6 @@ import (
 
 var userID int
 var privateFilename string
-var authUrl string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -61,10 +60,6 @@ var decryptCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(decryptCmd)
-
-	decryptCmd.Flags().StringVarP(
-		&authUrl, "auth_url", "a",
-		"https://auth.fduhole.com", "the auth url")
 
 	decryptCmd.Flags().IntVarP(
 		&userID, "user-id", "u",

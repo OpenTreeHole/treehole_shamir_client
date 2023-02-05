@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var prefix string
+
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
 	Use:   "generate",
@@ -17,6 +19,7 @@ treehole_shamir_client generate your_name your_email
 
 eg: 
 treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("error: your name or email not available")
@@ -27,9 +30,9 @@ treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
 			publicFilename  = "public.key"
 		)
 
-		if len(args) == 3 {
-			privateFilename = args[2] + "-" + privateFilename
-			publicFilename = args[2] + "-" + publicFilename
+		if prefix != "" {
+			privateFilename = prefix + "-" + privateFilename
+			publicFilename = prefix + "-" + publicFilename
 		}
 
 		key, err := crypto.GenerateKey(args[0], args[1], "rsa", 4096)
@@ -103,5 +106,5 @@ func init() {
 	// is called directly, e.g.:
 	// generateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	generateCmd.Flags().BoolP("output", "o", false, "name prefix of private.key and public.key")
+	generateCmd.Flags().StringVarP(&prefix, "output", "o", "", "name prefix of private.key and public.key")
 }
