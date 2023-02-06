@@ -50,34 +50,14 @@ treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
 			return fmt.Errorf("generate armored private key error: %s", err.Error())
 		}
 
-		privateKeyFile, err := os.Create(privateFilename)
+		err = os.WriteFile(privateFilename, []byte(armoredPrivateKey), 0666)
 		if err != nil {
-			return fmt.Errorf("create file private.key error: %s", err.Error())
+			return err
 		}
 
-		_, err = privateKeyFile.WriteString(armoredPrivateKey)
+		err = os.WriteFile(publicFilename, []byte(armoredPublicKey), 0666)
 		if err != nil {
-			return fmt.Errorf("write private key error: %s", err.Error())
-		}
-
-		err = privateKeyFile.Close()
-		if err != nil {
-			return fmt.Errorf("error close private.key: %s", err.Error())
-		}
-
-		publicKeyFile, err := os.Create(publicFilename)
-		if err != nil {
-			return fmt.Errorf("create file public.key error: %s", err.Error())
-		}
-
-		_, err = publicKeyFile.WriteString(armoredPublicKey)
-		if err != nil {
-			return fmt.Errorf("write public key error: %s", err.Error())
-		}
-
-		err = publicKeyFile.Close()
-		if err != nil {
-			return fmt.Errorf("error close public.key: %s", err.Error())
+			return err
 		}
 
 		fmt.Printf(

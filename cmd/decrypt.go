@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/spf13/cobra"
-	"io"
 	"os"
 	"treehole_shamir_client/utils"
 )
@@ -19,13 +18,7 @@ var decryptCmd = &cobra.Command{
 	Short: "decrypt a pgp message",
 	Long:  `get pgp message from auth server and decrypt with local private key`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// load privateKey
-		file, err := os.Open(privateFilename)
-		if err != nil {
-			return err
-		}
-
-		data, err := io.ReadAll(file)
+		data, err := os.ReadFile(privateFilename)
 		if err != nil {
 			return err
 		}
