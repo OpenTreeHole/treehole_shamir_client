@@ -15,6 +15,8 @@ import (
 
 var client = http.Client{}
 
+var Password string
+
 func DecryptAllUser(key *crypto.Key, authUrl string) error {
 
 	var identityName = key.GetEntity().PrimaryIdentity().Name
@@ -60,9 +62,15 @@ func DecryptAllUser(key *crypto.Key, authUrl string) error {
 	}
 
 	for i, message := range messages {
-		shareString, err := helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
+		shareString, err := helper.DecryptMessageArmored(privateKey, []byte(Password), message.PGPMessage)
 		if err != nil {
-			return err
+			if Password == "" {
+				shareString, err = helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
+			}
+
+			if err != nil {
+				return fmt.Errorf("密码错误: %s", err)
+			}
 		}
 
 		share, err := FromString(shareString)
@@ -163,9 +171,15 @@ func DecryptByUserID(key *crypto.Key, userID int, authUrl string) error {
 		return err
 	}
 
-	shareString, err := helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
+	shareString, err := helper.DecryptMessageArmored(privateKey, []byte(Password), message.PGPMessage)
 	if err != nil {
-		return err
+		if Password == "" {
+			shareString, err = helper.DecryptMessageArmored(privateKey, nil, message.PGPMessage)
+		}
+
+		if err != nil {
+			return fmt.Errorf("密码错误: %s", err)
+		}
 	}
 	_, err = FromString(shareString)
 	if err != nil {

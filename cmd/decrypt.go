@@ -61,4 +61,9 @@ func init() {
 	decryptCmd.Flags().StringVarP(
 		&privateFilename, "key", "k",
 		"private.key", "specific private key filename")
+
+	decryptCmd.Flags().StringVarP(
+		&utils.Password, "pass", "p",
+		"", "your private key password",
+	)
 }
