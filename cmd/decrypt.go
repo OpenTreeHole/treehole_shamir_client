@@ -11,6 +11,7 @@ import (
 
 var userID int
 var privateFilename string
+var Password string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -32,16 +33,30 @@ var decryptCmd = &cobra.Command{
 			return errors.New("not private key, please check your private key file")
 		}
 
+		if Password != "" {
+			utils.Key, err = key.Unlock([]byte(Password))
+			if err != nil {
+				return fmt.Errorf("密码错误: %s", err)
+			}
+		} else {
+			utils.Key = key
+		}
+
+		utils.KeyRing, err = crypto.NewKeyRing(utils.Key)
+		if err != nil {
+			return err
+		}
+
 		if userID < 0 {
 			return fmt.Errorf("invalid user_id %v", userID)
 		}
 		if userID == 0 {
-			err := utils.DecryptAllUser(key, authUrl)
+			err := utils.DecryptAllUser()
 			if err != nil {
 				return err
 			}
 		} else {
-			err := utils.DecryptByUserID(key, userID, authUrl)
+			err := utils.DecryptByUserID(userID)
 			if err != nil {
 				return err
 			}
@@ -63,7 +78,7 @@ func init() {
 		"private.key", "specific private key filename")
 
 	decryptCmd.Flags().StringVarP(
-		&utils.Password, "pass", "p",
+		&Password, "pass", "p",
 		"", "your private key password",
 	)
 }
