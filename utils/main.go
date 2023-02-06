@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 )
 
@@ -18,14 +20,12 @@ var Key *crypto.Key
 
 var KeyRing *crypto.KeyRing
 
-var AuthUrl string
-
-func DecryptAllUser() error {
+func DecryptAllUser(authUrl string) error {
 
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
-	req, err := http.NewRequest("GET", AuthUrl+"/api/shamir?identity_name="+identityName, nil)
+	req, err := http.NewRequest("GET", authUrl+"/api/shamir?identity_name="+identityName, nil)
 	if err != nil {
 		return err
 	}
@@ -59,24 +59,30 @@ func DecryptAllUser() error {
 		Shares:       make([]UserShare, 0, allUser),
 	}
 
-	for i, message := range messages {
-		pgpMessage, err := crypto.NewPGPMessageFromArmored(message.PGPMessage)
-		if err != nil {
+	messageChan := make(chan PGPMessageResponse)
+	resultChan := make(chan UserShareError)
+	done, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// start PGP decrypt goroutines
+	for i := 0; i < runtime.NumCPU(); i++ {
+		go decryptMessageTask(messageChan, resultChan, done)
+	}
+
+	// start message sending goroutine
+	go func() {
+		for i, message := range messages {
+			messageChan <- message
+			fmt.Printf("\ruser_id: %d, (%d / %d)", message.UserID, i, allUser)
+		}
+	}()
+
+	// receive shares
+	for i := 0; i < allUser; i++ {
+		result := <-resultChan
+		if result.error != nil {
 			return err
 		}
-
-		shareString, err := KeyRing.Decrypt(pgpMessage, nil, 0)
-
-		share, err := FromString(shareString.GetString())
-		if err != nil {
-			return err
-		}
-		shareRequest.Shares = append(shareRequest.Shares, UserShare{
-			UserID: message.UserID,
-			Share:  share,
-		})
-
-		fmt.Printf("\ruser_id: %d, (%d / %d)", message.UserID, i, allUser)
 	}
 
 	fmt.Println("\nDone!")
@@ -86,24 +92,14 @@ func DecryptAllUser() error {
 		return err
 	}
 
-	shareFile, err := os.Create("share_data_all.json")
-	if err != nil {
-		return err
-	}
-
-	_, err = shareFile.Write(shareData)
-	if err != nil {
-		return err
-	}
-
-	err = shareFile.Close()
+	err = os.WriteFile("share_data_all.json", shareData, 0666)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("share upload request save to share_data_all.json")
 
-	rsp, err = client.Post(AuthUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
+	rsp, err = client.Post(authUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
 	if err != nil {
 		return err
 	}
@@ -116,7 +112,7 @@ func DecryptAllUser() error {
 	_ = rsp.Body.Close()
 
 	if rsp.StatusCode >= 400 {
-		return fmt.Errorf("error sending shares: %v", err)
+		return fmt.Errorf("error sending shares: %v", string(data))
 	}
 
 	fmt.Println("shares upload success")
@@ -124,13 +120,13 @@ func DecryptAllUser() error {
 	return nil
 }
 
-func DecryptByUserID(userID int) error {
+func DecryptByUserID(userID int, authUrl string) error {
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
 	req, err := http.NewRequest(
 		"GET",
-		AuthUrl+"/api/shamir/"+strconv.Itoa(userID)+"?identity_name="+identityName,
+		authUrl+"/api/shamir/"+strconv.Itoa(userID)+"?identity_name="+identityName,
 		nil,
 	)
 	if err != nil {
@@ -160,14 +156,52 @@ func DecryptByUserID(userID int) error {
 	}
 	fmt.Println("receive messages from server, decrypting...")
 
-	pgpMessage, err := crypto.NewPGPMessageFromArmored(message.PGPMessage)
-	if err != nil {
-		return err
-	}
+	shareString, err := decryptMessage(message)
 
-	shareString, err := KeyRing.Decrypt(pgpMessage, nil, 0)
-
-	fmt.Printf("user_id: %v\n%s\n", userID, shareString.GetString())
+	fmt.Printf("user_id: %v\n%s\n", userID, shareString)
 
 	return nil
+}
+
+func decryptMessageTask(
+	messageChan <-chan PGPMessageResponse,
+	resultChan chan<- UserShareError,
+	ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case message := <-messageChan:
+			shareString, err := decryptMessage(message)
+			if err != nil {
+				resultChan <- UserShareError{
+					error: err,
+				}
+			} else {
+				share, err := FromString(shareString)
+				if err != nil {
+					resultChan <- UserShareError{
+						error: err,
+					}
+				}
+				resultChan <- UserShareError{
+					UserShare: UserShare{
+						UserID: message.UserID,
+						Share:  share,
+					},
+					error: nil,
+				}
+			}
+		}
+	}
+}
+
+func decryptMessage(message PGPMessageResponse) (string, error) {
+	pgpMessage, err := crypto.NewPGPMessageFromArmored(message.PGPMessage)
+	if err != nil {
+		return "", err
+	}
+
+	rawMessage, err := KeyRing.Decrypt(pgpMessage, nil, 0)
+	return rawMessage.GetString(), err
 }

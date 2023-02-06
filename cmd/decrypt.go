@@ -51,12 +51,12 @@ var decryptCmd = &cobra.Command{
 			return fmt.Errorf("invalid user_id %v", userID)
 		}
 		if userID == 0 {
-			err := utils.DecryptAllUser()
+			err := utils.DecryptAllUser(authUrl)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := utils.DecryptByUserID(userID)
+			err := utils.DecryptByUserID(userID, authUrl)
 			if err != nil {
 				return err
 			}

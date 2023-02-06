@@ -14,3 +14,8 @@ type UploadSharesRequest struct {
 	IdentityName string      `json:"identity_name"`
 	Shares       []UserShare `json:"shares"`
 }
+
+type UserShareError struct {
+	UserShare
+	error
+}
