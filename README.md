@@ -28,6 +28,8 @@ shamir_client decrypt -k <your_private_key_file> -p <your_password> -u <user_id>
 
 ### 生成公私钥文件
 
+仅用于管理员生成新的密钥，与解密的密钥无关
+
 ```shell
 shamir_client generate <your_name> <your_email> <your_password>
 ```
