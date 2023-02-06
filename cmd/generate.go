@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
+	"github.com/ProtonMail/gopenpgp/v2/helper"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -18,11 +19,11 @@ var generateCmd = &cobra.Command{
 treehole_shamir_client generate your_name your_email
 
 eg: 
-treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
-	Args: cobra.ExactArgs(2),
+treehole_shamir_client generate jingyijun jingyijun@fduhole.com 123465789`,
+	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 2 {
-			return fmt.Errorf("error: your name or email not available")
+		if len(args) < 3 {
+			return fmt.Errorf("error: your name or email or password not available")
 		}
 
 		var (
@@ -35,14 +36,14 @@ treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
 			publicFilename = prefix + "-" + publicFilename
 		}
 
-		key, err := crypto.GenerateKey(args[0], args[1], "rsa", 4096)
+		armoredPrivateKey, err := helper.GenerateKey(args[0], args[1], []byte(args[2]), "rsa", 4096)
 		if err != nil {
 			return fmt.Errorf("key generating error: %s", err)
 		}
 
-		armoredPrivateKey, err := key.Armor()
+		key, err := crypto.NewKeyFromArmored(armoredPrivateKey)
 		if err != nil {
-			return fmt.Errorf("generate armored private key error: %s", err.Error())
+			return err
 		}
 
 		armoredPublicKey, err := key.GetArmoredPublicKey()
@@ -63,8 +64,10 @@ treehole_shamir_client generate jingyijun jingyijun@fduhole.com`,
 		fmt.Printf(
 			`generate key success
 identity name: %s
+password: %s
 store in %s and %s`,
 			key.GetEntity().PrimaryIdentity().Name,
+			args[2],
 			privateFilename,
 			publicFilename,
 		)
