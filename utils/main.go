@@ -82,6 +82,8 @@ func DecryptAllUser(authUrl string) error {
 		result := <-resultChan
 		if result.error != nil {
 			return err
+		} else {
+			shareRequest.Shares = append(shareRequest.Shares, result.UserShare)
 		}
 	}
 
