@@ -12,6 +12,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 )
 
 var client = http.Client{}
@@ -73,7 +74,7 @@ func DecryptAllUser(authUrl string) error {
 	go func() {
 		for i, message := range messages {
 			messageChan <- message
-			fmt.Printf("\ruser_id: %d, (%d / %d)", message.UserID, i, allUser)
+			fmt.Printf("\ruser_id: %d, (%d / %d)", message.UserID, i+1, allUser)
 		}
 	}()
 
@@ -89,24 +90,42 @@ func DecryptAllUser(authUrl string) error {
 
 	fmt.Println("\nDone!")
 
-	shareData, err := json.Marshal(shareRequest)
+	shareData, err := SaveShareData(shareRequest, identityName)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile("share_data_all.json", shareData, 0666)
+	err = UploadShares(shareData, authUrl)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("share upload request save to share_data_all.json")
+	return nil
+}
 
-	rsp, err = client.Post(authUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
+func SaveShareData(shareRequest UploadSharesRequest, identityName string) (shareData []byte, err error) {
+	shareData, _ = json.Marshal(shareRequest)
+
+	filename := fmt.Sprintf("share_data_%s.json", strings.Split(identityName, " ")[0])
+
+	err = os.WriteFile(filename, shareData, 0666)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("share upload request save to %s\n", filename)
+
+	return shareData, nil
+}
+
+func UploadShares(shareData []byte, authUrl string) error {
+
+	rsp, err := client.Post(authUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
 	if err != nil {
 		return err
 	}
 
-	data, err = io.ReadAll(rsp.Body)
+	data, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return err
 	}
@@ -118,7 +137,6 @@ func DecryptAllUser(authUrl string) error {
 	}
 
 	fmt.Println("shares upload success")
-
 	return nil
 }
 

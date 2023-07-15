@@ -12,6 +12,7 @@ import (
 var userID int
 var privateFilename string
 var Password string
+var ShareFileName []string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -19,6 +20,22 @@ var decryptCmd = &cobra.Command{
 	Short: "decrypt a pgp message",
 	Long:  `get pgp message from auth server and decrypt with local private key`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if ShareFileName != nil {
+			for _, filename := range ShareFileName {
+				data, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+
+				err = utils.UploadShares(data, authUrl)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+
 		data, err := os.ReadFile(privateFilename)
 		if err != nil {
 			return err
@@ -80,5 +97,10 @@ func init() {
 	decryptCmd.Flags().StringVarP(
 		&Password, "pass", "p",
 		"", "your private key password",
+	)
+
+	decryptCmd.Flags().StringSliceVarP(
+		&ShareFileName, "file", "f",
+		nil, "specific share data filename",
 	)
 }
