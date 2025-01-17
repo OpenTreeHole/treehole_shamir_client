@@ -13,6 +13,7 @@ var userID int
 var privateFilename string
 var Password string
 var ShareFileName []string
+var token string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -27,7 +28,7 @@ var decryptCmd = &cobra.Command{
 					return err
 				}
 
-				err = utils.UploadShares(data, authUrl)
+				err = utils.UploadShares(data, authUrl, token)
 				if err != nil {
 					return err
 				}
@@ -68,12 +69,12 @@ var decryptCmd = &cobra.Command{
 			return fmt.Errorf("invalid user_id %v", userID)
 		}
 		if userID == 0 {
-			err := utils.DecryptAllUser(authUrl)
+			err := utils.DecryptAllUser(authUrl, token)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := utils.DecryptByUserID(userID, authUrl)
+			err := utils.DecryptByUserID(userID, authUrl, token)
 			if err != nil {
 				return err
 			}
@@ -85,6 +86,10 @@ var decryptCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(decryptCmd)
+
+	decryptCmd.Flags().StringVarP(
+		&token, "token", "t",
+		"", "auth token")
 
 	decryptCmd.Flags().IntVarP(
 		&userID, "user-id", "u",

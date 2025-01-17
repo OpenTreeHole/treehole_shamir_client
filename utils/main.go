@@ -21,7 +21,7 @@ var Key *crypto.Key
 
 var KeyRing *crypto.KeyRing
 
-func DecryptAllUser(authUrl string) error {
+func DecryptAllUser(authUrl string, token string) error {
 
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
@@ -30,6 +30,9 @@ func DecryptAllUser(authUrl string) error {
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	rsp, err := client.Do(req)
 	if err != nil {
@@ -95,7 +98,7 @@ func DecryptAllUser(authUrl string) error {
 		return err
 	}
 
-	err = UploadShares(shareData, authUrl)
+	err = UploadShares(shareData, authUrl, token)
 	if err != nil {
 		return err
 	}
@@ -118,9 +121,18 @@ func SaveShareData(shareRequest UploadSharesRequest, identityName string) (share
 	return shareData, nil
 }
 
-func UploadShares(shareData []byte, authUrl string) error {
+func UploadShares(shareData []byte, authUrl string, token string) error {
+	req, err := http.NewRequest("POST", authUrl+"/api/shamir/shares", bytes.NewBuffer(shareData))
+	if err != nil {
+		return err
+	}
 
-	rsp, err := client.Post(authUrl+"/api/shamir/shares", "application/json", bytes.NewBuffer(shareData))
+	// 设置 Content-Type 和其他 header
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	// 如果需要更多 headers，可以继续设置，比如 req.Header.Set("X-Custom-Header", "value")
+
+	rsp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -130,8 +142,10 @@ func UploadShares(shareData []byte, authUrl string) error {
 		return err
 	}
 
-	_ = rsp.Body.Close()
+	// 关闭响应 body
+	defer rsp.Body.Close()
 
+	// 如果响应状态码 >= 400，则返回错误信息
 	if rsp.StatusCode >= 400 {
 		return fmt.Errorf("error sending shares: %v", string(data))
 	}
@@ -140,7 +154,7 @@ func UploadShares(shareData []byte, authUrl string) error {
 	return nil
 }
 
-func DecryptByUserID(userID int, authUrl string) error {
+func DecryptByUserID(userID int, authUrl string, token string) error {
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
@@ -152,6 +166,8 @@ func DecryptByUserID(userID int, authUrl string) error {
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	rsp, err := client.Do(req)
 	if err != nil {

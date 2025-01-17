@@ -32,11 +32,15 @@ var uploadCmd = &cobra.Command{
 			return err
 		}
 
-		res, err := http.DefaultClient.Post(
-			authUrl+"/api/shamir/key",
-			"application/json",
-			bytes.NewReader(body),
-		)
+		req, err := http.NewRequest("POST", authUrl+"/api/shamir/key", bytes.NewReader(body))
+		if err != nil {
+			return err
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return err
 		}
@@ -46,11 +50,12 @@ var uploadCmd = &cobra.Command{
 			return err
 		}
 
-		_ = res.Body.Close()
+		defer res.Body.Close()
 
 		if res.StatusCode != 200 {
 			return fmt.Errorf("upload public key error: %s", string(body))
 		}
+
 		fmt.Printf("upload public key success")
 		return nil
 	},
