@@ -25,7 +25,7 @@ var KeyRing *crypto.KeyRing
 func DecryptAllUser(authUrl string, token string) error {
 
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
-	fmt.Printf("your uid is %v\n", identityName)
+	fmt.Printf("your identity_name is %v\n", identityName)
 
 	req, err := http.NewRequest("GET", authUrl+"/api/shamir?identity_name="+url.QueryEscape(identityName), nil)
 	if err != nil {
@@ -159,7 +159,7 @@ func UploadShares(shareData []byte, authUrl string, token string) error {
 
 func DecryptByUserID(userID int, authUrl string, token string) error {
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
-	fmt.Printf("your uid is %v\n", identityName)
+	fmt.Printf("your identity_name is %v\n", identityName)
 
 	req, err := http.NewRequest(
 		"GET",
