@@ -9,6 +9,7 @@ import (
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -26,13 +27,14 @@ func DecryptAllUser(authUrl string, token string) error {
 	var identityName = Key.GetEntity().PrimaryIdentity().Name
 	fmt.Printf("your uid is %v\n", identityName)
 
-	req, err := http.NewRequest("GET", authUrl+"/api/shamir?identity_name="+identityName, nil)
+	req, err := http.NewRequest("GET", authUrl+"/api/shamir?identity_name="+url.QueryEscape(identityName), nil)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
+	// fmt.Println(req.URL.String())
 
 	rsp, err := client.Do(req)
 	if err != nil {
@@ -47,6 +49,7 @@ func DecryptAllUser(authUrl string, token string) error {
 	_ = rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
+		fmt.Println(rsp.StatusCode)
 		return errors.New(string(data))
 	}
 

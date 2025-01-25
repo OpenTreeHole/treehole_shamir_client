@@ -13,7 +13,6 @@ var userID int
 var privateFilename string
 var Password string
 var ShareFileName []string
-var token string
 
 // decryptCmd represents the decrypt command
 var decryptCmd = &cobra.Command{
@@ -86,10 +85,6 @@ var decryptCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(decryptCmd)
-
-	decryptCmd.Flags().StringVarP(
-		&token, "token", "t",
-		"", "auth token")
 
 	decryptCmd.Flags().IntVarP(
 		&userID, "user-id", "u",
