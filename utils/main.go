@@ -163,7 +163,7 @@ func DecryptByUserID(userID int, authUrl string, token string) error {
 
 	req, err := http.NewRequest(
 		"GET",
-		authUrl+"/api/shamir/"+strconv.Itoa(userID)+"?identity_name="+identityName,
+		authUrl+"/api/shamir/"+strconv.Itoa(userID)+"?identity_name="+url.QueryEscape(identityName),
 		nil,
 	)
 	if err != nil {

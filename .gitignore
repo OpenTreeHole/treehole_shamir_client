@@ -2,3 +2,5 @@
 *.exe
 *.key
 *.json
+.DS_Store
+shamir_client
