@@ -27,7 +27,7 @@ var decryptCmd = &cobra.Command{
 					return err
 				}
 
-				err = utils.UploadShares(data, authUrl)
+				err = utils.UploadShares(data, authUrl, token)
 				if err != nil {
 					return err
 				}
@@ -68,12 +68,12 @@ var decryptCmd = &cobra.Command{
 			return fmt.Errorf("invalid user_id %v", userID)
 		}
 		if userID == 0 {
-			err := utils.DecryptAllUser(authUrl)
+			err := utils.DecryptAllUser(authUrl, token)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := utils.DecryptByUserID(userID, authUrl)
+			err := utils.DecryptByUserID(userID, authUrl, token)
 			if err != nil {
 				return err
 			}
