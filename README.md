@@ -58,10 +58,10 @@ shamir_client email [-f <your_share_file>]
 
 ### 上传新管理员公钥
 
-准备好7个分开的公钥文件
+准备好任意大于 1 的奇数个分开的公钥文件
 
 ```shell
-shamir_client upload -t <your_token> <file1> <file2> <file3> <file4> <file5> <file6> <file7> [-a <server_url>]
+shamir_client upload -t <your_token> <file1> <file2> <file3> [<file4> <file5> ...] [-a <server_url>]
 ```
 
 ### 更新密钥管理员

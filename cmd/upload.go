@@ -15,7 +15,12 @@ var uploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "upload public keys to auth",
 	Long:  `upload public keys to auth shamir server`,
-	Args:  cobra.ExactArgs(7),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) <= 1 || len(args)%2 == 0 {
+			return fmt.Errorf("accepts any odd number of public key files greater than 1, received %d", len(args))
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var publicKeys []string
 		for _, filename := range args {
