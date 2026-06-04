@@ -14,9 +14,20 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var client = http.Client{}
+var Client = newHTTPClient()
+
+func newHTTPClient() *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSHandshakeTimeout = 60 * time.Second
+
+	return &http.Client{
+		Timeout:   10 * time.Minute,
+		Transport: transport,
+	}
+}
 
 var Key *crypto.Key
 
@@ -36,7 +47,7 @@ func DecryptAllUser(authUrl string, token string) error {
 	req.Header.Set("Authorization", "Bearer "+token)
 	// fmt.Println(req.URL.String())
 
-	rsp, err := client.Do(req)
+	rsp, err := Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -135,7 +146,7 @@ func UploadShares(shareData []byte, authUrl string, token string) error {
 	req.Header.Set("Authorization", "Bearer "+token)
 	// 如果需要更多 headers，可以继续设置，比如 req.Header.Set("X-Custom-Header", "value")
 
-	rsp, err := client.Do(req)
+	rsp, err := Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -172,7 +183,7 @@ func DecryptByUserID(userID int, authUrl string, token string) error {
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	rsp, err := client.Do(req)
+	rsp, err := Client.Do(req)
 	if err != nil {
 		return err
 	}

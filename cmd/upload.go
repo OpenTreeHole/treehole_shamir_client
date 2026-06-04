@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"treehole_shamir_client/utils"
 )
 
 // uploadCmd represents the upload command
@@ -45,7 +46,7 @@ var uploadCmd = &cobra.Command{
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token)
 
-		res, err := http.DefaultClient.Do(req)
+		res, err := utils.Client.Do(req)
 		if err != nil {
 			return err
 		}
